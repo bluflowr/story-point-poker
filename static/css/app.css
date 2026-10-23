@@ -523,3 +523,80 @@ body:has(#room-state[data-locked="true"]) .facilitator-control {
     animation: none;
   }
 }
+
+/* Story queue */
+
+.queue {
+  margin: 0 0 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.queue li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.queue li:last-child {
+  border-bottom: none;
+}
+
+.queue .title {
+  margin-right: 0.5rem;
+}
+
+.queue li.done .title {
+  color: var(--muted);
+}
+
+.queue li.current .title {
+  font-weight: 700;
+}
+
+.queue-tools {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-left: 0.25rem;
+}
+
+.queue-add {
+  margin-bottom: 1rem;
+}
+
+.queue-add summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.queue-add form {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+textarea,
+select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.queue-add .button {
+  margin-top: 0.75rem;
+}
+
+.save-estimate {
+  margin-bottom: 0.75rem;
+}
+
+.save-estimate select {
+  width: auto;
+  min-width: 5rem;
+}

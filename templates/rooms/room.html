@@ -54,5 +54,17 @@
       {% include "rooms/_results.html" %}
     </div>
     {% include "rooms/_deck.html" %}
+    {% include "rooms/_queue.html" %}
+
+    {# Never re-rendered by the server (so typing isn't lost); cleared after sending. #}
+    <details class="queue-add facilitator-control">
+      <summary class="small">Add stories to the queue</summary>
+      <form ws-send hx-on::ws-after-send="this.reset()">
+        <input type="hidden" name="action" value="add_stories">
+        <label for="new-stories" class="small muted">One story per line, e.g. pasted from Jira or a spreadsheet</label>
+        <textarea id="new-stories" name="stories" rows="5" placeholder="PROJ-101 Sign up with email&#10;PROJ-102 Reset password"></textarea>
+        <button type="submit" class="button">Add to queue</button>
+      </form>
+    </details>
   </div>
 {% endblock %}

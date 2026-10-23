@@ -90,7 +90,8 @@ async def test_others_see_that_you_voted_but_not_what():
     ada_view, grace_view = await ada.latest(), await grace.latest()
 
     assert card_in_row(grace_view, "Ada") == "✓"
-    assert "8" not in player_list(grace_view)
+    shown_cards = re.findall(r'class="mini-card[^"]*"[^>]*>([^<]*)<', player_list(grace_view))
+    assert "8" not in shown_cards
     assert "1 of 2 voted" in grace_view
     assert 'class="card selected"' in ada_view
     assert 'class="card selected"' not in grace_view
@@ -216,7 +217,7 @@ async def test_message_flood_is_dropped(monkeypatch):
 async def test_oversized_message_is_ignored():
     room = await new_room()
     (ada,) = await seat(room, "Ada")
-    await ada.send(action="story", title="x" * 5000)
+    await ada.send(action="story", title="x" * 25_000)
     assert await ada.ws.receive_nothing()
     await leave(ada)
 

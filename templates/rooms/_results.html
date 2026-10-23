@@ -29,13 +29,27 @@
     {% endif %}
 
     {% if i_control %}
+      {# Saves the estimate to the story list (and the CSV), then moves to the next queued story. #}
+      <form ws-send class="save-estimate">
+        <input type="hidden" name="action" value="save_estimate">
+        <input type="hidden" name="round" value="{{ room.round }}">
+        <label for="final-estimate" class="small muted">Final estimate</label>
+        <div class="share-row">
+          <select id="final-estimate" name="estimate">
+            {% for card in estimate_choices %}
+              <option value="{{ card }}"{% if card == suggested_estimate %} selected{% endif %}>{{ card }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="button primary">{% if waiting_count %}Save &amp; next story{% else %}Save estimate{% endif %}</button>
+        </div>
+      </form>
       <form ws-send>
         <input type="hidden" name="action" value="next_round">
         <input type="hidden" name="round" value="{{ room.round }}">
-        <button type="submit" class="button primary">Next round</button>
+        <button type="submit" class="link-button">Next round without saving (vote again)</button>
       </form>
     {% else %}
-      <p class="muted">Waiting for {{ facilitator.name|default:"the facilitator" }} to start the next round.</p>
+      <p class="muted">Waiting for {{ facilitator.name|default:"the facilitator" }} to save the estimate.</p>
     {% endif %}
   {% else %}
     <h2>Voting</h2>

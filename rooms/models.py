@@ -25,6 +25,8 @@ class Room(models.Model):
     facilitator = models.ForeignKey("Participant", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     # If set, only the facilitator can reveal, start rounds, and change the story or deck.
     facilitator_only = models.BooleanField(default=False)
+    # The queued story being estimated now, if any (see Story).
+    current_story = models.ForeignKey("Story", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     # When the round timer runs out; empty when no timer is running.
     timer_ends_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -56,3 +58,23 @@ class Participant(models.Model):
 
     def __str__(self):
         return f"{self.display_name} in {self.room}"
+
+
+class Story(models.Model):
+    """A story in the room's queue, and its final estimate once saved."""
+
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="stories")
+    title = models.CharField(max_length=200)
+    position = models.PositiveIntegerField(default=0)
+    # The agreed estimate; empty until it has been estimated.
+    estimate = models.CharField(max_length=8, blank=True)
+    # Everyone's votes when the estimate was saved: [{"name": "Ada", "vote": "5"}, ...]
+    votes = models.JSONField(default=list, blank=True)
+    estimated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["position", "id"]
+        verbose_name_plural = "stories"
+
+    def __str__(self):
+        return self.title

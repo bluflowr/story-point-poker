@@ -9,6 +9,14 @@ A planning poker app for estimating stories with your team in real time. It's bu
 - **Round timer:** whoever controls the round can start a 30-second, 1, 2 or 5-minute timer for everyone. At zero it shows "Time's up"; cards are still revealed by hand.
 - **Who controls the round** is chosen when creating a room: anyone (the default) or only the facilitator. The facilitator can change it later. In facilitator-only rooms, only they can reveal, start the next round, and change the story or deck.
 
+## Story queue and CSV
+
+- **Add stories** under "Add stories to the queue": paste a list, one story per line (e.g. from Jira or a spreadsheet). Then use **Estimate now**, ↑/↓ and **Remove** in the Stories panel.
+- **After the reveal**, pick the **Final estimate** (pre-selected: the consensus, else the most common card, else the card nearest the average, rounding ties up) and click **Save & next story**. It records the estimate and everyone's votes and starts the next story. "Next round without saving" lets the team vote again.
+- **Without a queue**, saving still adds the round to the story list under the current story title.
+- **Download CSV** (anyone in the room): story, estimate, votes and time (UTC). Rooms are wiped when the server restarts or redeploys, so download before you finish.
+- Queue management follows the room's "who controls the round" setting.
+
 ## Local setup
 
 You need [uv](https://docs.astral.sh/uv/), which installs the right Python version (3.12) and all dependencies for you.
@@ -97,7 +105,8 @@ uv run python manage.py expire_rooms
 Built-in limits (in `rooms/views.py` and `rooms/consumers.py`):
 - 10 new rooms per IP address per 10 minutes, and 200 per hour overall
 - 50 players per room
-- 20 actions per connection per 10 seconds; larger-than-2KB messages are ignored
+- 20 actions per connection per 10 seconds; messages over 20 KB are ignored (room for a pasted list of about 100 stories)
+- 200 stories per room
 
 ## Deploying to Render
 

@@ -15,10 +15,10 @@ import math
 from datetime import timedelta
 
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Max
 from django.utils import timezone
 
-from .models import Room
+from .models import Room, Story
 
 STORY_TITLE_MAX = Room._meta.get_field("story_title").max_length
 
@@ -79,6 +79,9 @@ def set_story(room, actor, title):
         return False
     room.story_title = title
     room.save(update_fields=["story_title"])
+    if room.current_story_id:
+        # Renaming the story being estimated renames it in the queue too.
+        Story.objects.filter(id=room.current_story_id).update(title=title)
     return True
 
 
@@ -122,6 +125,96 @@ def timer_seconds_left(room, now=None):
         return None
     left = (room.timer_ends_at - (now or timezone.now())).total_seconds()
     return max(0, math.ceil(left))
+
+
+# --- Story queue
+
+MAX_STORIES = 200
+
+
+def _fresh_round(room, **fields):
+    """Move to a new round: hide the cards, clear votes and the timer."""
+    Room.objects.filter(id=room.id).update(round=F("round") + 1, revealed=False, timer_ends_at=None, **fields)
+    room.participants.update(vote="")
+
+
+def _waiting(room):
+    """Stories not yet estimated, apart from the one being estimated now."""
+    return room.stories.filter(estimate="").exclude(id=room.current_story_id)
+
+
+def _next_position(room):
+    return (room.stories.aggregate(Max("position"))["position__max"] or 0) + 1
+
+
+def add_stories(room, actor, text):
+    """Add one story per line of `text` to the end of the queue."""
+    if not can_control(room, actor):
+        return False
+    titles = [" ".join(line.split())[:STORY_TITLE_MAX] for line in text.splitlines()]
+    titles = [title for title in titles if title][: max(0, MAX_STORIES - room.stories.count())]
+    if not titles:
+        return False
+    first = _next_position(room)
+    Story.objects.bulk_create(
+        Story(room=room, title=title, position=first + offset) for offset, title in enumerate(titles)
+    )
+    return True
+
+
+def start_story(room, actor, story_id):
+    """Make a waiting story the one being estimated, with a fresh round."""
+    if not can_control(room, actor):
+        return False
+    story = _waiting(room).filter(id=story_id).first()
+    if story is None:
+        return False
+    with transaction.atomic():
+        _fresh_round(room, current_story=story, story_title=story.title)
+    return True
+
+
+def move_story(room, actor, story_id, direction):
+    """Swap a waiting story with the waiting story above ("up") or below ("down") it."""
+    if not can_control(room, actor) or direction not in ("up", "down"):
+        return False
+    waiting = list(_waiting(room))
+    index = next((i for i, story in enumerate(waiting) if story.id == story_id), None)
+    if index is None:
+        return False
+    other = index - 1 if direction == "up" else index + 1
+    if not 0 <= other < len(waiting):
+        return False
+    a, b = waiting[index], waiting[other]
+    a.position, b.position = b.position, a.position
+    Story.objects.bulk_update([a, b], ["position"])
+    return True
+
+
+def remove_story(room, actor, story_id):
+    if not can_control(room, actor):
+        return False
+    return bool(room.stories.filter(id=story_id).delete()[0])
+
+
+def save_estimate(room, actor, estimate, round_number):
+    """
+    Record the final estimate (and everyone's votes) for the story being
+    estimated, then start the next waiting story. Without a queued story, the
+    round is saved under the current story title so it still ends up in the CSV.
+    """
+    if not can_control(room, actor) or not room.revealed or room.round != round_number or estimate not in room.deck:
+        return False
+    votes = [{"name": p.display_name, "vote": p.vote} for p in room.participants.all() if p.vote]
+    with transaction.atomic():
+        story = room.current_story or Story(
+            room=room, title=room.story_title or "Untitled story", position=_next_position(room)
+        )
+        story.estimate, story.votes, story.estimated_at = estimate, votes, timezone.now()
+        story.save()
+        following = _waiting(room).exclude(id=story.id).first()
+        _fresh_round(room, current_story=following, story_title=following.title if following else "")
+    return True
 
 
 # --- Roles

@@ -1,5 +1,8 @@
+import csv
+
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .expiry import delete_expired_rooms_occasionally
@@ -79,6 +82,35 @@ def join(request, code):
         return redirect(room)
 
     return render(request, "rooms/join.html", {"room": room, "form": form})
+
+
+# Spreadsheets treat cells starting with these as formulas, so a story title
+# like "=HYPERLINK(...)" could run when the CSV is opened. Prefixing an
+# apostrophe makes them plain text.
+FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _csv_cell(text):
+    return f"'{text}" if text.startswith(FORMULA_START) else text
+
+
+def export_csv(request, code):
+    """The room's stories, estimates and votes as a CSV file. Players only."""
+    room = get_object_or_404(Room, code=code)
+    if get_participant(request.session, room) is None:
+        return redirect("rooms:join", code=room.code)
+
+    filename = f"story-points-{room.code}-{timezone.now():%Y-%m-%d}.csv"
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response.write("\ufeff")  # tells Excel the file is UTF-8 (for ☕, ½, accents)
+    writer = csv.writer(response)
+    writer.writerow(["Story", "Estimate", "Votes", "Estimated at (UTC)"])
+    for story in room.stories.all():
+        votes = "; ".join(f"{vote['name']}: {vote['vote']}" for vote in story.votes)
+        estimated_at = f"{story.estimated_at:%Y-%m-%d %H:%M}" if story.estimated_at else ""
+        writer.writerow([_csv_cell(story.title), story.estimate, _csv_cell(votes), estimated_at])
+    return response
 
 
 def healthz(request):

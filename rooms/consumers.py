@@ -54,8 +54,9 @@ def group_name(room_code):
 CLOSE_ROOM_GONE = 4404
 CLOSE_NOT_SEATED = 4403
 
-# Anything bigger than this isn't a real form submission.
-MAX_MESSAGE_LENGTH = 2000
+# Anything bigger than this isn't a real form submission. Big enough for a
+# pasted backlog of about 100 long story titles.
+MAX_MESSAGE_LENGTH = 20_000
 
 
 class RoomConsumer(AsyncWebsocketConsumer):
@@ -167,6 +168,17 @@ class RoomConsumer(AsyncWebsocketConsumer):
             changed = actions.reveal(room, actor, _int(message.get("round")))
         elif action == "next_round":
             changed = actions.next_round(room, actor, _int(message.get("round")))
+        elif action == "add_stories":
+            changed = actions.add_stories(room, actor, str(message.get("stories", "")))
+        elif action == "start_story":
+            changed = actions.start_story(room, actor, _int(message.get("target")))
+        elif action == "move_story":
+            changed = actions.move_story(room, actor, _int(message.get("target")), message.get("direction"))
+        elif action == "remove_story":
+            changed = actions.remove_story(room, actor, _int(message.get("target")))
+        elif action == "save_estimate":
+            estimate = str(message.get("estimate", ""))
+            changed = actions.save_estimate(room, actor, estimate, _int(message.get("round")))
         elif action == "start_timer":
             changed = actions.start_timer(room, actor, _int(message.get("seconds")))
         elif action == "stop_timer":

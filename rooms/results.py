@@ -58,3 +58,21 @@ def summarize(votes, deck):
         top = max(counted_tally.values())
         summary["most_common"] = [card for card in deck if counted_tally[card] == top]
     return summary
+
+
+def suggest(summary, deck):
+    """
+    The card to pre-select as the final estimate: the consensus, else the most
+    played card (non-numeric decks), else the card nearest the average. A tie
+    between two cards picks the higher one, the cautious choice.
+    """
+    if summary["consensus"]:
+        return summary["consensus"]
+    if summary["most_common"]:
+        return summary["most_common"][0]
+    if summary["average"] is not None:
+        average = float(summary["average"])
+        numeric = [(index, card) for index, card in enumerate(deck) if _as_number(card) is not None]
+        if numeric:
+            return min(numeric, key=lambda item: (abs(_as_number(item[1]) - average), -item[0]))[1]
+    return ""
