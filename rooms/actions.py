@@ -11,8 +11,12 @@ was showing. If the room has moved on (say two people clicked "Next round"
 at the same moment), the stale request is ignored instead of applied twice.
 """
 
+import math
+from datetime import timedelta
+
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 
 from .models import Room
 
@@ -51,14 +55,17 @@ def vote(room, actor, card, round_number):
 def reveal(room, actor, round_number):
     if not can_control(room, actor):
         return False
-    return bool(Room.objects.filter(id=room.id, round=round_number, revealed=False).update(revealed=True))
+    revealed = Room.objects.filter(id=room.id, round=round_number, revealed=False)
+    return bool(revealed.update(revealed=True, timer_ends_at=None))
 
 
 def next_round(room, actor, round_number):
     if not can_control(room, actor):
         return False
     with transaction.atomic():
-        advanced = Room.objects.filter(id=room.id, round=round_number).update(round=F("round") + 1, revealed=False)
+        advanced = Room.objects.filter(id=room.id, round=round_number).update(
+            round=F("round") + 1, revealed=False, timer_ends_at=None
+        )
         if advanced:
             room.participants.update(vote="")
     return bool(advanced)
@@ -80,9 +87,41 @@ def set_deck(room, actor, cards):
     if not can_control(room, actor) or list(cards) == room.deck:
         return False
     with transaction.atomic():
-        Room.objects.filter(id=room.id).update(deck=list(cards), round=F("round") + 1, revealed=False)
+        Room.objects.filter(id=room.id).update(
+            deck=list(cards), round=F("round") + 1, revealed=False, timer_ends_at=None
+        )
         room.participants.update(vote="")
     return True
+
+
+# --- Timer
+
+TIMER_PRESETS = {30: "30s", 60: "1 min", 120: "2 min", 300: "5 min"}
+
+
+def start_timer(room, actor, seconds):
+    """Start (or restart) the round timer. Revealing or a new round clears it."""
+    if not can_control(room, actor) or room.revealed or seconds not in TIMER_PRESETS:
+        return False
+    room.timer_ends_at = timezone.now() + timedelta(seconds=seconds)
+    room.save(update_fields=["timer_ends_at"])
+    return True
+
+
+def stop_timer(room, actor):
+    if not can_control(room, actor) or room.timer_ends_at is None:
+        return False
+    room.timer_ends_at = None
+    room.save(update_fields=["timer_ends_at"])
+    return True
+
+
+def timer_seconds_left(room, now=None):
+    """Whole seconds until the timer runs out (0 once it has), or None if no timer."""
+    if room.timer_ends_at is None:
+        return None
+    left = (room.timer_ends_at - (now or timezone.now())).total_seconds()
+    return max(0, math.ceil(left))
 
 
 # --- Roles

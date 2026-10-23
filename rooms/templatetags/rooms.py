@@ -17,3 +17,9 @@ def ws_button(label, css="", **fields):
         css,
         label,
     )
+
+
+@register.filter
+def minutes_seconds(seconds):
+    """125 -> "2:05"."""
+    return f"{seconds // 60}:{seconds % 60:02d}"

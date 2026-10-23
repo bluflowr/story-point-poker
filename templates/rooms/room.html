@@ -3,7 +3,10 @@
 
 {% block title %}{% if room.story_title %}{{ room.story_title }} · {% endif %}Story Point Poker{% endblock %}
 
-{% block scripts %}<script src="{% static 'js/connection.js' %}" defer></script>{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/connection.js' %}" defer></script>
+  <script src="{% static 'js/timer.js' %}" defer></script>
+{% endblock %}
 
 {% block content %}
   <div class="reconnecting-banner" role="status">Connection lost. Reconnecting…</div>

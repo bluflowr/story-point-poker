@@ -51,4 +51,6 @@ def board_context(room, me_id, *, also_online=()):
         "i_control": bool(me and actions.can_control(room, me)),
         "i_can_take_over": bool(me and actions.can_take_over(room, me, online)),
         "results": summarize(votes, room.deck) if room.revealed else None,
+        "timer_left": actions.timer_seconds_left(room),
+        "timer_presets": actions.TIMER_PRESETS.items(),
     }

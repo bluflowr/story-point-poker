@@ -45,7 +45,6 @@
 
 ### Out of scope for MVP (candidates for later)
 - Story queue with recorded estimates and CSV export
-- A round timer
 - Jira/Linear/GitHub import and write-back
 - Accounts and history
 
@@ -80,7 +79,8 @@ How a vote travels: you click a card → HTMX sends `{"action":"vote","value":"5
 | 4 ✅ | Hardening | Reconnect handling, room expiry command, mobile layout, consumer tests (Channels `WebsocketCommunicator`) |
 | 5 ✅ | Deploy | Live at https://story-point-poker-13a5.onrender.com (Render, Virginia, Free). Verified health check, HTTPS, security headers, static files, and a full two-player round over wss:// |
 | 6 ✅ | Roles | Facilitator (creator; hand over, or take over if they're offline) and observers. Per-room "Who controls the round": anyone (default) or facilitator only. Facilitator can switch players between voter/observer and remove players. Permissions checked server-side in `rooms/actions.py` |
-| 7+ | Extras | Pick from the "later" list |
+| 7 ✅ | Timer | Round timer (30s / 1 / 2 / 5 min), started and stopped by whoever controls the round; shows "Time's up" (no auto-reveal, no sound). Cleared on reveal, next round, or deck switch. Counted down in the browser (`static/js/timer.js`) from the seconds left the server sends |
+| 8+ | Extras | Pick from the "later" list |
 
 ## Render notes
 - **Free plan:** good for development and trying things out. It sleeps after about 15 minutes idle, so the first visit takes about 30 seconds to wake it.

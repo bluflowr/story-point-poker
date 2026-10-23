@@ -167,6 +167,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
             changed = actions.reveal(room, actor, _int(message.get("round")))
         elif action == "next_round":
             changed = actions.next_round(room, actor, _int(message.get("round")))
+        elif action == "start_timer":
+            changed = actions.start_timer(room, actor, _int(message.get("seconds")))
+        elif action == "stop_timer":
+            changed = actions.stop_timer(room, actor)
         elif action == "observe":
             observing = message.get("observing") == "true"
             changed = actions.set_observing(room, actor, _int(message.get("target")), observing)

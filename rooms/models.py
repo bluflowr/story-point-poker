@@ -25,6 +25,8 @@ class Room(models.Model):
     facilitator = models.ForeignKey("Participant", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     # If set, only the facilitator can reveal, start rounds, and change the story or deck.
     facilitator_only = models.BooleanField(default=False)
+    # When the round timer runs out; empty when no timer is running.
+    timer_ends_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_activity_at = models.DateTimeField(default=timezone.now)
 

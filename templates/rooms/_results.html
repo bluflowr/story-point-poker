@@ -1,3 +1,4 @@
+{% load rooms %}
 <section id="results" class="panel">
   {% if room.revealed %}
     <h2>Results</h2>
@@ -39,6 +40,20 @@
   {% else %}
     <h2>Voting</h2>
     <p class="muted">{{ voted_count }} of {{ voter_count }} voted</p>
+
+    {# The countdown is ticked in the browser by static/js/timer.js. #}
+    <div class="timer-row">
+      {% if timer_left is not None %}
+        <span class="timer{% if not timer_left %} times-up{% endif %}" data-seconds-left="{{ timer_left }}" role="timer">
+          {% if timer_left %}{{ timer_left|minutes_seconds }}{% else %}Time's up{% endif %}
+        </span>
+        {% if i_control %}{% ws_button "Stop timer" action="stop_timer" %}{% endif %}
+      {% elif i_control %}
+        <span class="muted small">Timer:</span>
+        {% for seconds, label in timer_presets %}{% ws_button label action="start_timer" seconds=seconds %}{% endfor %}
+      {% endif %}
+    </div>
+
     {% if i_control %}
       <form ws-send>
         <input type="hidden" name="action" value="reveal">

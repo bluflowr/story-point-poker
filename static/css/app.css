@@ -490,3 +490,36 @@ body.reconnecting [hx-ext="ws"] {
 body:has(#room-state[data-locked="true"]) .facilitator-control {
   display: none;
 }
+
+/* Round timer */
+
+.timer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: -0.25rem 0 1rem;
+}
+
+.timer {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer.times-up {
+  color: var(--error);
+  animation: times-up-flash 1s ease-in-out 3;
+}
+
+@keyframes times-up-flash {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer.times-up {
+    animation: none;
+  }
+}
