@@ -5,12 +5,14 @@ which Participant the browser is in each room it has joined.
 Session layout:
     session["seats"] = {"<room code>": <participant id>, ...}
     session["display_name"] = "<last name used>"  # pre-fills the join form
+    session["created_rooms"] = ["<room code>", ...]  # makes the creator facilitator on joining
 """
 
 from .models import Participant
 
 SEATS_KEY = "seats"
 NAME_KEY = "display_name"
+CREATED_KEY = "created_rooms"
 
 
 def get_participant(session, room):
@@ -31,3 +33,12 @@ def remember_participant(session, participant):
 
 def last_display_name(session):
     return session.get(NAME_KEY, "")
+
+
+def remember_created(session, room):
+    # Keep the list short; only recent rooms matter.
+    session[CREATED_KEY] = [*session.get(CREATED_KEY, [])[-19:], room.code]
+
+
+def created(session, room):
+    return room.code in session.get(CREATED_KEY, [])

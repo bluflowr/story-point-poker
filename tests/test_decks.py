@@ -105,7 +105,7 @@ def test_set_deck_starts_a_fresh_round():
     Room.objects.filter(id=room.id).update(revealed=True)
     room.refresh_from_db()
 
-    assert actions.set_deck(room, ["S", "M", "L"])
+    assert actions.set_deck(room, ada, ["S", "M", "L"])
     room.refresh_from_db()
     ada.refresh_from_db()
     assert room.deck == ["S", "M", "L"]
@@ -117,6 +117,7 @@ def test_set_deck_starts_a_fresh_round():
 @pytest.mark.django_db
 def test_set_same_deck_is_not_a_change():
     room = Room.objects.create()
-    assert not actions.set_deck(room, decks.FIBONACCI)
+    ada = room.participants.create(display_name="Ada")
+    assert not actions.set_deck(room, ada, decks.FIBONACCI)
     room.refresh_from_db()
     assert room.round == 1

@@ -21,6 +21,10 @@ class Room(models.Model):
     story_title = models.CharField(max_length=200, blank=True)
     revealed = models.BooleanField(default=False)
     round = models.PositiveIntegerField(default=1)
+    # Starts as the room's creator; can be handed over or taken over.
+    facilitator = models.ForeignKey("Participant", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    # If set, only the facilitator can reveal, start rounds, and change the story or deck.
+    facilitator_only = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     last_activity_at = models.DateTimeField(default=timezone.now)
 
@@ -41,6 +45,8 @@ class Participant(models.Model):
     display_name = models.CharField(max_length=30)
     # The card played this round; empty means no vote yet.
     vote = models.CharField(max_length=8, blank=True)
+    # Observers watch without voting and aren't counted in "X of Y voted".
+    is_observer = models.BooleanField(default=False)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

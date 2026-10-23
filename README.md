@@ -2,6 +2,12 @@
 
 A planning poker app for estimating stories with your team in real time. It's built with Django, Django Channels and HTMX. See [PLAN.md](PLAN.md) for requirements and milestones.
 
+## Roles
+
+- **Facilitator:** whoever creates the room. They can hand the role to someone else, and if they go offline anyone can take over. The facilitator can switch players between voting and observing, and remove players (who can join again).
+- **Observers** watch without voting and aren't counted in "X of Y voted". Tick the box when joining, or switch any time in the room.
+- **Who controls the round** is chosen when creating a room: anyone (the default) or only the facilitator. The facilitator can change it later. In facilitator-only rooms, only they can reveal, start the next round, and change the story or deck.
+
 ## Local setup
 
 You need [uv](https://docs.astral.sh/uv/), which installs the right Python version (3.12) and all dependencies for you.

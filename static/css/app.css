@@ -413,3 +413,80 @@ body.reconnecting [hx-ext="ws"] {
     order: 2;
   }
 }
+
+/* Roles */
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.participants li {
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid currentColor;
+  border-radius: 1rem;
+}
+
+.player-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  width: 100%;
+  padding-left: 1.1rem;
+}
+
+.ws-button {
+  display: inline;
+}
+
+.link-button {
+  padding: 0;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--accent);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-button.danger {
+  color: var(--error);
+}
+
+.roles {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.roles p {
+  margin: 0 0 0.4rem;
+}
+
+.checkbox {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin-top: 0.75rem;
+  cursor: pointer;
+}
+
+.hero + form .deck-picker + .deck-picker {
+  margin-top: 1rem;
+}
+
+/* In facilitator-only rooms, hide the story and deck forms from everyone
+   else. #room-state is updated by the server on every change. */
+body:has(#room-state[data-locked="true"]) .facilitator-control {
+  display: none;
+}

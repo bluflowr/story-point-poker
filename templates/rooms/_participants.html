@@ -1,22 +1,73 @@
+{% load rooms %}
 <section id="participants" class="panel">
   <h2>Players <span class="muted small">{{ online_count }} online</span></h2>
   <ul class="participants">
     {% for player in players %}
       <li class="{% if player.online %}online{% else %}offline{% endif %}">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span class="name">
-          {{ player.name }}
-          {% if player.is_me %}<span class="muted small">(you)</span>{% endif %}
-          {% if not player.online %}<span class="muted small">offline</span>{% endif %}
-        </span>
-        {% if room.revealed %}
-          <span class="mini-card revealed">{{ player.card|default:"–" }}</span>
-        {% elif player.has_voted %}
-          <span class="mini-card voted" title="Voted">✓</span>
-        {% else %}
-          <span class="mini-card" title="Not voted yet"></span>
+        <div class="player-row">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="name">
+            {{ player.name }}
+            {% if player.is_me %}<span class="muted small">(you)</span>{% endif %}
+            {% if player.is_facilitator %}<span class="badge">Facilitator</span>{% endif %}
+            {% if player.is_observer %}<span class="badge muted">Observer</span>{% endif %}
+            {% if not player.online %}<span class="muted small">offline</span>{% endif %}
+          </span>
+          {% if player.is_observer %}
+            {# Observers don't vote, so no card. #}
+          {% elif room.revealed %}
+            <span class="mini-card revealed">{{ player.card|default:"–" }}</span>
+          {% elif player.has_voted %}
+            <span class="mini-card voted" title="Voted">✓</span>
+          {% else %}
+            <span class="mini-card" title="Not voted yet"></span>
+          {% endif %}
+        </div>
+
+        {% if i_facilitate and not player.is_me %}
+          <div class="player-tools">
+            {% if player.is_observer %}
+              {% ws_button "Make voter" action="observe" target=player.id observing="false" %}
+            {% else %}
+              {% ws_button "Make observer" action="observe" target=player.id observing="true" %}
+            {% endif %}
+            {% ws_button "Make facilitator" action="hand_over" target=player.id %}
+            {% ws_button "Remove" action="remove" target=player.id css="danger" %}
+          </div>
         {% endif %}
       </li>
     {% endfor %}
   </ul>
+
+  <div class="roles small">
+    <p>
+      {% if i_observe %}
+        You're observing. {% ws_button "Vote instead" action="observe" target=me_id observing="false" %}
+      {% else %}
+        You're voting. {% ws_button "Observe instead" action="observe" target=me_id observing="true" %}
+      {% endif %}
+    </p>
+
+    <p class="muted">
+      {% if facilitator %}
+        Facilitator: {{ facilitator.name }}{% if not facilitator.online %} (offline){% endif %}.
+      {% else %}
+        No facilitator yet.
+      {% endif %}
+      {% if room.facilitator_only %}Only the facilitator can reveal, start rounds, and change the story or deck.{% else %}Anyone can reveal and start rounds.{% endif %}
+    </p>
+
+    {% if i_can_take_over %}
+      <p>{% ws_button "Become facilitator" action="take_over" %}</p>
+    {% endif %}
+    {% if i_facilitate %}
+      <p>
+        {% if room.facilitator_only %}
+          {% ws_button "Let anyone control the round" action="facilitator_only" value="false" %}
+        {% else %}
+          {% ws_button "Only I control the round" action="facilitator_only" value="true" %}
+        {% endif %}
+      </p>
+    {% endif %}
+  </div>
 </section>

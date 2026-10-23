@@ -10,6 +10,23 @@ class JoinForm(forms.Form):
         max_length=30,
         widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "nickname"}),
     )
+    observer = forms.BooleanField(
+        label="Join as an observer (watch without voting)",
+        required=False,
+    )
+
+
+class RoomOptionsForm(forms.Form):
+    control = forms.ChoiceField(
+        label="Who controls the round?",
+        choices=[
+            ("anyone", "Anyone can reveal and start the next round"),
+            ("facilitator", "Only the facilitator (you, to start with)"),
+        ],
+        initial="anyone",
+        required=False,  # missing means "anyone"
+        widget=forms.RadioSelect,
+    )
 
 
 def _deck_choice(label, cards):

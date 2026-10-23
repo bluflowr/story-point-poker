@@ -24,7 +24,9 @@
     </header>
 
     {# Never re-rendered by the server, so nobody loses half-typed text. #}
-    <form ws-send class="story-form">
+    {% include "rooms/_room_state.html" %}
+
+    <form ws-send class="story-form facilitator-control">
       <input type="hidden" name="action" value="story">
       <label for="story-title" class="small muted">What are we estimating?</label>
       <div class="share-row">
@@ -33,7 +35,7 @@
       </div>
     </form>
 
-    <details class="deck-switcher">
+    <details class="deck-switcher facilitator-control">
       <summary class="small">Change deck</summary>
       <form ws-send>
         <input type="hidden" name="action" value="deck">

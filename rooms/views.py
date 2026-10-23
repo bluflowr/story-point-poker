@@ -3,9 +3,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from .expiry import delete_expired_rooms_occasionally
-from .forms import DeckForm, JoinForm
+from .forms import DeckForm, JoinForm, RoomOptionsForm
 from .fragments import board_context
-from .identity import get_participant, last_display_name, remember_participant
+from .identity import created, get_participant, last_display_name, remember_created, remember_participant
 from .limits import RateLimiter, client_ip
 from .models import Room
 
@@ -16,21 +16,27 @@ MAX_PLAYERS_PER_ROOM = 50
 
 
 def home(request):
-    return render(request, "rooms/home.html", {"deck_form": DeckForm()})
+    return render(request, "rooms/home.html", {"deck_form": DeckForm(), "options_form": RoomOptionsForm()})
 
 
 @require_POST
 def create_room(request):
     deck_form = DeckForm(request.POST)
-    if not deck_form.is_valid():
-        return render(request, "rooms/home.html", {"deck_form": deck_form}, status=400)
+    options_form = RoomOptionsForm(request.POST)
+    context = {"deck_form": deck_form, "options_form": options_form}
+    if not (deck_form.is_valid() and options_form.is_valid()):
+        return render(request, "rooms/home.html", context, status=400)
 
     if not (ROOM_CREATION_PER_IP.allow(client_ip(request)) and ROOM_CREATION_OVERALL.allow()):
-        context = {"deck_form": deck_form, "error": "Too many new rooms just now. Please wait a few minutes."}
+        context["error"] = "Too many new rooms just now. Please wait a few minutes."
         return render(request, "rooms/home.html", context, status=429)
 
     delete_expired_rooms_occasionally()
-    room = Room.objects.create(deck=deck_form.cleaned_data["cards"])
+    room = Room.objects.create(
+        deck=deck_form.cleaned_data["cards"],
+        facilitator_only=options_form.cleaned_data["control"] == "facilitator",
+    )
+    remember_created(request.session, room)
     return redirect(room)
 
 
@@ -61,8 +67,14 @@ def join(request, code):
     if request.method == "POST" and room.participants.count() >= MAX_PLAYERS_PER_ROOM:
         form.add_error(None, f"This room is full ({MAX_PLAYERS_PER_ROOM} players).")
     elif request.method == "POST" and form.is_valid():
-        participant = room.participants.create(display_name=form.cleaned_data["display_name"])
+        participant = room.participants.create(
+            display_name=form.cleaned_data["display_name"],
+            is_observer=form.cleaned_data["observer"],
+        )
         remember_participant(request.session, participant)
+        if room.facilitator_id is None and created(request.session, room):
+            room.facilitator = participant
+            room.save(update_fields=["facilitator"])
         room.touch()
         return redirect(room)
 

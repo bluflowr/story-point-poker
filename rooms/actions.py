@@ -1,7 +1,10 @@
 """
-What players can do in a room. The consumer calls these with the room
-freshly loaded from the database; each returns True if anything changed, so
-the consumer knows whether to push an update to everyone.
+What players can do in a room, and who is allowed to do it.
+
+The consumer calls these with the room freshly loaded from the database and
+`actor`, the Participant who sent the action. Each returns True if anything
+changed, so the consumer knows whether to push an update to everyone.
+Anything not allowed simply returns False.
 
 Actions that depend on the round take the round number the player's page
 was showing. If the room has moved on (say two people clicked "Next round"
@@ -16,23 +19,44 @@ from .models import Room
 STORY_TITLE_MAX = Room._meta.get_field("story_title").max_length
 
 
-def vote(room, participant_id, card, round_number):
-    if room.revealed or room.round != round_number or card not in room.deck:
-        return False
-    participant = room.participants.filter(id=participant_id).first()
-    if participant is None:
+# --- Permissions
+
+
+def is_facilitator(room, actor):
+    return room.facilitator_id == actor.id
+
+
+def can_control(room, actor):
+    """Reveal, start rounds, and change the story or deck."""
+    return not room.facilitator_only or is_facilitator(room, actor)
+
+
+def can_take_over(room, actor, online_ids):
+    """Anyone can step in when there is no facilitator, or they're offline."""
+    return not is_facilitator(room, actor) and (room.facilitator_id is None or room.facilitator_id not in online_ids)
+
+
+# --- Voting
+
+
+def vote(room, actor, card, round_number):
+    if actor.is_observer or room.revealed or room.round != round_number or card not in room.deck:
         return False
     # Picking the card you already chose takes the vote back.
-    participant.vote = "" if participant.vote == card else card
-    participant.save(update_fields=["vote"])
+    actor.vote = "" if actor.vote == card else card
+    actor.save(update_fields=["vote"])
     return True
 
 
-def reveal(room, round_number):
+def reveal(room, actor, round_number):
+    if not can_control(room, actor):
+        return False
     return bool(Room.objects.filter(id=room.id, round=round_number, revealed=False).update(revealed=True))
 
 
-def next_round(room, round_number):
+def next_round(room, actor, round_number):
+    if not can_control(room, actor):
+        return False
     with transaction.atomic():
         advanced = Room.objects.filter(id=room.id, round=round_number).update(round=F("round") + 1, revealed=False)
         if advanced:
@@ -40,7 +64,9 @@ def next_round(room, round_number):
     return bool(advanced)
 
 
-def set_story(room, title):
+def set_story(room, actor, title):
+    if not can_control(room, actor):
+        return False
     title = " ".join(title.split())[:STORY_TITLE_MAX]
     if title == room.story_title:
         return False
@@ -49,11 +75,62 @@ def set_story(room, title):
     return True
 
 
-def set_deck(room, cards):
+def set_deck(room, actor, cards):
     """Switch decks. Starts a fresh round, since old votes may not exist in the new deck."""
-    if list(cards) == room.deck:
+    if not can_control(room, actor) or list(cards) == room.deck:
         return False
     with transaction.atomic():
         Room.objects.filter(id=room.id).update(deck=list(cards), round=F("round") + 1, revealed=False)
         room.participants.update(vote="")
     return True
+
+
+# --- Roles
+
+
+def set_observing(room, actor, target_id, observing):
+    """Switch between voting and observing: yourself, or anyone if you're the facilitator."""
+    if target_id != actor.id and not is_facilitator(room, actor):
+        return False
+    target = room.participants.filter(id=target_id).first()
+    if target is None or target.is_observer == observing:
+        return False
+    target.is_observer = observing
+    if observing:
+        target.vote = ""  # observers don't vote, so withdraw any vote
+    target.save(update_fields=["is_observer", "vote"])
+    return True
+
+
+def hand_over(room, actor, target_id):
+    if not is_facilitator(room, actor) or target_id == actor.id:
+        return False
+    target = room.participants.filter(id=target_id).first()
+    if target is None:
+        return False
+    room.facilitator = target
+    room.save(update_fields=["facilitator"])
+    return True
+
+
+def take_over(room, actor, online_ids):
+    if not can_take_over(room, actor, online_ids):
+        return False
+    room.facilitator = actor
+    room.save(update_fields=["facilitator"])
+    return True
+
+
+def set_facilitator_only(room, actor, facilitator_only):
+    if not is_facilitator(room, actor) or room.facilitator_only == facilitator_only:
+        return False
+    room.facilitator_only = facilitator_only
+    room.save(update_fields=["facilitator_only"])
+    return True
+
+
+def remove_player(room, actor, target_id):
+    """The facilitator removes someone (not themselves). They can join again."""
+    if not is_facilitator(room, actor) or target_id == actor.id:
+        return False
+    return bool(room.participants.filter(id=target_id).delete()[0])

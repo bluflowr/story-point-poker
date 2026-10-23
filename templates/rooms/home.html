@@ -10,6 +10,12 @@
     {% csrf_token %}
     {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
     {% include "rooms/_deck_fields.html" %}
+    <fieldset class="deck-picker">
+      <legend>{{ options_form.control.label }}</legend>
+      {% for radio in options_form.control %}
+        <label class="deck-option">{{ radio.tag }} {{ radio.choice_label }}</label>
+      {% endfor %}
+    </fieldset>
     <button type="submit" class="button primary">Create a room</button>
   </form>
 {% endblock %}

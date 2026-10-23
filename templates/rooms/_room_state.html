@@ -1,0 +1,3 @@
+{# Invisible marker the CSS reads to hide controls this viewer can't use #}
+{# (the story and deck forms, which are never re-rendered so typing isn't lost). #}
+<div id="room-state" hidden data-locked="{% if i_control %}false{% else %}true{% endif %}"></div>

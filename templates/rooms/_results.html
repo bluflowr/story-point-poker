@@ -27,18 +27,26 @@
       </ul>
     {% endif %}
 
-    <form ws-send>
-      <input type="hidden" name="action" value="next_round">
-      <input type="hidden" name="round" value="{{ room.round }}">
-      <button type="submit" class="button primary">Next round</button>
-    </form>
+    {% if i_control %}
+      <form ws-send>
+        <input type="hidden" name="action" value="next_round">
+        <input type="hidden" name="round" value="{{ room.round }}">
+        <button type="submit" class="button primary">Next round</button>
+      </form>
+    {% else %}
+      <p class="muted">Waiting for {{ facilitator.name|default:"the facilitator" }} to start the next round.</p>
+    {% endif %}
   {% else %}
     <h2>Voting</h2>
     <p class="muted">{{ voted_count }} of {{ voter_count }} voted</p>
-    <form ws-send>
-      <input type="hidden" name="action" value="reveal">
-      <input type="hidden" name="round" value="{{ room.round }}">
-      <button type="submit" class="button primary" {% if not voted_count %}disabled{% endif %}>Reveal cards</button>
-    </form>
+    {% if i_control %}
+      <form ws-send>
+        <input type="hidden" name="action" value="reveal">
+        <input type="hidden" name="round" value="{{ room.round }}">
+        <button type="submit" class="button primary" {% if not voted_count %}disabled{% endif %}>Reveal cards</button>
+      </form>
+    {% else %}
+      <p class="muted">Waiting for {{ facilitator.name|default:"the facilitator" }} to reveal the cards.</p>
+    {% endif %}
   {% endif %}
 </section>

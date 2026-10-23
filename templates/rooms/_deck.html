@@ -1,5 +1,9 @@
+{% load rooms %}
 <section id="deck" class="panel">
   <h2>Your card</h2>
+  {% if i_observe %}
+    <p class="muted">You're observing, so you don't vote. {% ws_button "Vote instead" action="observe" target=me_id observing="false" %}</p>
+  {% else %}
   <div class="deck">
     {% for card in room.deck %}
       <form ws-send>
@@ -16,5 +20,6 @@
     <p class="muted small">Cards are revealed. Start the next round to vote again.</p>
   {% elif my_vote %}
     <p class="muted small">Click your card again to take your vote back.</p>
+  {% endif %}
   {% endif %}
 </section>

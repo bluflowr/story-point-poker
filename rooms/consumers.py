@@ -7,11 +7,13 @@ re-renders the room for its own participant and sends the HTML down the
 socket. The htmx ws extension swaps it into the page by element id.
 
 Players' actions arrive as JSON from forms marked `ws-send`, e.g.
-{"action": "vote", "round": "3", "value": "5"} or
-{"action": "deck", "deck": "custom", "custom": "1, 2, 4"}.
+{"action": "vote", "round": "3", "value": "5"},
+{"action": "deck", "deck": "custom", "custom": "1, 2, 4"} or
+{"action": "remove", "target": "12"}. Who may do what lives in actions.py.
 """
 
 import json
+from dataclasses import dataclass
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -23,6 +25,23 @@ from .fragments import board_context
 from .identity import get_participant
 from .limits import RateLimiter
 from .models import Room
+
+
+@dataclass
+class Outcome:
+    """What an action did, so receive() knows what to send."""
+
+    changed: bool = False
+    deck_error: str | None = None
+    removed_id: int | None = None
+
+
+def _int(value):
+    """Numbers arrive as strings from forms; anything else becomes None."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def group_name(room_code):
@@ -82,11 +101,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
         if not isinstance(message, dict):
             return
 
-        changed, deck_error = await self.apply_action(message)
-        if deck_error:
+        outcome = await self.apply_action(message)
+        if outcome.deck_error:
             # Only the person who made the mistake needs to see it.
-            await self.send(text_data=render_to_string("rooms/_deck_error.html", {"deck_error": deck_error}))
-        if changed:
+            await self.send(text_data=render_to_string("rooms/_deck_error.html", {"deck_error": outcome.deck_error}))
+        if outcome.removed_id:
+            await self.channel_layer.group_send(
+                self.group, {"type": "player.removed", "participant_id": outcome.removed_id}
+            )
+        if outcome.changed:
             await self.broadcast_change()
 
     async def broadcast_change(self):
@@ -98,6 +121,14 @@ class RoomConsumer(AsyncWebsocketConsumer):
         html = await self.render_room()
         if html:
             await self.send(text_data=html)
+
+    async def player_removed(self, event):
+        """The facilitator removed someone; if it's us, say so and stop."""
+        if event["participant_id"] != self.participant_id:
+            return
+        notice = render_to_string("rooms/_notice.html", {"problem": "removed", "room_code": self.room_code})
+        await self.send(text_data=notice)
+        await self.close(code=CLOSE_NOT_SEATED)
 
     # Database work runs in a thread, since the ORM is synchronous.
 
@@ -115,40 +146,48 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def apply_action(self, message):
-        """Returns (changed, deck_error)."""
         room = Room.objects.filter(code=self.room_code).first()
-        if room is None:
-            return False, None
-
+        actor = room and room.participants.filter(id=self.participant_id).first()
         action = message.get("action")
-        if action == "ping":
-            # Keep-alive from connection.js; the message itself is the point.
-            return False, None
-        if action == "story":
-            changed = actions.set_story(room, str(message.get("title", "")))
-        elif action == "deck":
+        if actor is None or action == "ping":
+            # No longer in the room, or a keep-alive from connection.js.
+            return Outcome()
+
+        if action == "deck":
             form = DeckForm(data=message)
             if not form.is_valid():
                 errors = [error for field_errors in form.errors.values() for error in field_errors]
-                return False, " ".join(errors)
-            changed = actions.set_deck(room, form.cleaned_data["cards"])
+                return Outcome(deck_error=" ".join(errors))
+            changed = actions.set_deck(room, actor, form.cleaned_data["cards"])
+        elif action == "story":
+            changed = actions.set_story(room, actor, str(message.get("title", "")))
+        elif action == "vote":
+            changed = actions.vote(room, actor, str(message.get("value", "")), _int(message.get("round")))
+        elif action == "reveal":
+            changed = actions.reveal(room, actor, _int(message.get("round")))
+        elif action == "next_round":
+            changed = actions.next_round(room, actor, _int(message.get("round")))
+        elif action == "observe":
+            observing = message.get("observing") == "true"
+            changed = actions.set_observing(room, actor, _int(message.get("target")), observing)
+        elif action == "hand_over":
+            changed = actions.hand_over(room, actor, _int(message.get("target")))
+        elif action == "take_over":
+            changed = actions.take_over(room, actor, presence.online_ids(room.code))
+        elif action == "facilitator_only":
+            changed = actions.set_facilitator_only(room, actor, message.get("value") == "true")
+        elif action == "remove":
+            target = _int(message.get("target"))
+            if not actions.remove_player(room, actor, target):
+                return Outcome()
+            room.touch()
+            return Outcome(changed=True, removed_id=target)
         else:
-            try:
-                round_number = int(message.get("round"))
-            except (TypeError, ValueError):
-                return False, None
-            if action == "vote":
-                changed = actions.vote(room, self.participant_id, str(message.get("value", "")), round_number)
-            elif action == "reveal":
-                changed = actions.reveal(room, round_number)
-            elif action == "next_round":
-                changed = actions.next_round(room, round_number)
-            else:
-                return False, None
+            return Outcome()
 
         if changed:
             room.touch()
-        return changed, None
+        return Outcome(changed=changed)
 
     @database_sync_to_async
     def render_room(self):
