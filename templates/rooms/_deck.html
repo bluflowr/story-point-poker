@@ -1,0 +1,20 @@
+<section id="deck" class="panel">
+  <h2>Your card</h2>
+  <div class="deck">
+    {% for card in room.deck %}
+      <form ws-send>
+        <input type="hidden" name="action" value="vote">
+        <input type="hidden" name="round" value="{{ room.round }}">
+        <input type="hidden" name="value" value="{{ card }}">
+        <button type="submit" class="card{% if card == my_vote %} selected{% endif %}"
+                aria-pressed="{% if card == my_vote %}true{% else %}false{% endif %}"
+                {% if room.revealed %}disabled{% endif %}>{{ card }}</button>
+      </form>
+    {% endfor %}
+  </div>
+  {% if room.revealed %}
+    <p class="muted small">Cards are revealed. Start the next round to vote again.</p>
+  {% elif my_vote %}
+    <p class="muted small">Click your card again to take your vote back.</p>
+  {% endif %}
+</section>

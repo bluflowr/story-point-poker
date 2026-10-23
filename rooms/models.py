@@ -39,6 +39,8 @@ class Room(models.Model):
 class Participant(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="participants")
     display_name = models.CharField(max_length=30)
+    # The card played this round; empty means no vote yet.
+    vote = models.CharField(max_length=8, blank=True)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

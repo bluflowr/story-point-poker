@@ -1,0 +1,44 @@
+<section id="results" class="panel">
+  {% if room.revealed %}
+    <h2>Results</h2>
+    {% if results.consensus %}
+      <p class="consensus">Everyone agrees: <strong>{{ results.consensus }}</strong> 🎉</p>
+    {% endif %}
+
+    {% if results.average %}
+      <dl class="stats">
+        <div><dt>Average</dt><dd>{{ results.average }}</dd></div>
+        <div><dt>Lowest</dt><dd>{{ results.low }}</dd></div>
+        <div><dt>Highest</dt><dd>{{ results.high }}</dd></div>
+      </dl>
+    {% elif results.most_common %}
+      <dl class="stats">
+        <div><dt>Most common</dt><dd>{{ results.most_common|join:", " }}</dd></div>
+      </dl>
+    {% elif not results.total %}
+      <p class="muted">Nobody voted this round.</p>
+    {% endif %}
+
+    {% if results.counts %}
+      <ul class="tally">
+        {% for card, count in results.counts %}
+          <li><span class="mini-card revealed">{{ card }}</span> × {{ count }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form ws-send>
+      <input type="hidden" name="action" value="next_round">
+      <input type="hidden" name="round" value="{{ room.round }}">
+      <button type="submit" class="button primary">Next round</button>
+    </form>
+  {% else %}
+    <h2>Voting</h2>
+    <p class="muted">{{ voted_count }} of {{ voter_count }} voted</p>
+    <form ws-send>
+      <input type="hidden" name="action" value="reveal">
+      <input type="hidden" name="round" value="{{ room.round }}">
+      <button type="submit" class="button primary" {% if not voted_count %}disabled{% endif %}>Reveal cards</button>
+    </form>
+  {% endif %}
+</section>

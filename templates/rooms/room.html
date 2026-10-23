@@ -3,32 +3,34 @@
 {% block title %}{% if room.story_title %}{{ room.story_title }} · {% endif %}Story Point Poker{% endblock %}
 
 {% block content %}
-  <header class="room-header">
-    <div>
-      <p class="muted small">Round {{ room.round }}</p>
-      <h1>{{ room.story_title|default:"Untitled story" }}</h1>
-    </div>
-    <div class="share">
-      <label for="room-url" class="small muted">Invite your team</label>
-      <div class="share-row">
-        <input id="room-url" type="text" value="{{ room_url }}" readonly onfocus="this.select()">
-        <button type="button" class="button" onclick="navigator.clipboard.writeText(document.getElementById('room-url').value); this.textContent = 'Copied!'">Copy link</button>
-      </div>
-    </div>
-  </header>
-
-  {# Opens the live connection; fragments sent by the server replace elements with matching ids. #}
+  {# Opens the live connection. Forms marked ws-send inside it send over the socket, #}
+  {# and fragments from the server replace the elements with matching ids. #}
   <div hx-ext="ws" ws-connect="/ws/rooms/{{ room.code }}/">
-    {% include "rooms/_participants.html" %}
-  </div>
+    <header class="room-header">
+      {% include "rooms/_story.html" %}
+      <div class="share">
+        <label for="room-url" class="small muted">Invite your team</label>
+        <div class="share-row">
+          <input id="room-url" type="text" value="{{ room_url }}" readonly onfocus="this.select()">
+          <button type="button" class="button" onclick="navigator.clipboard.writeText(document.getElementById('room-url').value); this.textContent = 'Copied!'">Copy link</button>
+        </div>
+      </div>
+    </header>
 
-  <section class="panel">
-    <h2>Your card</h2>
-    {# Voting goes live in milestone 3. #}
-    <div class="deck">
-      {% for card in room.deck %}
-        <button type="button" class="card" disabled>{{ card }}</button>
-      {% endfor %}
+    {# Never re-rendered by the server, so nobody loses half-typed text. #}
+    <form ws-send class="story-form">
+      <input type="hidden" name="action" value="story">
+      <label for="story-title" class="small muted">What are we estimating?</label>
+      <div class="share-row">
+        <input id="story-title" type="text" name="title" maxlength="200" value="{{ room.story_title }}" placeholder="e.g. PROJ-123 Password reset email">
+        <button type="submit" class="button">Set story</button>
+      </div>
+    </form>
+
+    <div class="board">
+      {% include "rooms/_participants.html" %}
+      {% include "rooms/_results.html" %}
     </div>
-  </section>
+    {% include "rooms/_deck.html" %}
+  </div>
 {% endblock %}
