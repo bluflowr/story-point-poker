@@ -27,6 +27,25 @@
     document.body.classList.toggle("reconnecting", retrying);
   });
 
+  // 3. When the server sends a notice (room expired, seat lost, removed),
+  //    end the connection from this side. The server closes it too, but on
+  //    Render something between the server and the browser doesn't pass that
+  //    close on, so the page would sit on a half-open connection. htmx closes
+  //    a socket whose element it removes, so swap in a frozen copy of the room
+  //    (still visible, greyed out by the CSS) and remove the live one.
+  document.addEventListener("htmx:wsAfterMessage", function () {
+    var notice = document.getElementById("notice");
+    var live = document.querySelector("[ws-connect]");
+    if (!live || !notice || !notice.textContent.trim()) {
+      return;
+    }
+    var frozen = live.cloneNode(true);
+    frozen.removeAttribute("ws-connect");
+    frozen.setAttribute("data-closed", "");
+    live.before(frozen);
+    htmx.remove(live);
+  });
+
   setInterval(function () {
     if (socket) {
       socket.send(JSON.stringify({ action: "ping" }));
