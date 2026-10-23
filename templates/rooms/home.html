@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>Story Point Poker</h1>
-  <p>Hello from Django + Channels. Room creation arrives in milestone 1.</p>
+  <header class="hero">
+    <h1>Story Point Poker</h1>
+    <p class="muted">Estimate stories together. Create a room, share the link, and vote.</p>
+    <form method="post" action="{% url 'rooms:create' %}">
+      {% csrf_token %}
+      <button type="submit" class="button primary">Create a room</button>
+    </form>
+  </header>
 {% endblock %}

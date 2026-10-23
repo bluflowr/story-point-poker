@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Join room · Story Point Poker{% endblock %}
+
+{% block content %}
+  <section class="panel narrow">
+    <h1>Join the room</h1>
+    <form method="post">
+      {% csrf_token %}
+      <label for="{{ form.display_name.id_for_label }}">{{ form.display_name.label }}</label>
+      {{ form.display_name }}
+      {% for error in form.display_name.errors %}<p class="error">{{ error }}</p>{% endfor %}
+      <button type="submit" class="button primary">Join</button>
+    </form>
+  </section>
+{% endblock %}

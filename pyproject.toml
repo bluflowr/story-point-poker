@@ -23,6 +23,8 @@ dev = [
 DJANGO_SETTINGS_MODULE = "config.settings"
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# WhiteNoise warns when collectstatic hasn't run, which tests never do.
+filterwarnings = ["ignore:No directory at:UserWarning"]
 
 [tool.ruff]
 line-length = 120

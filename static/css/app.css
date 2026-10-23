@@ -2,14 +2,180 @@
   color-scheme: light dark;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
+
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1c2026;
+  --muted: #5f6b7a;
+  --border: #d9dee5;
+  --accent: #2f5bd3;
+  --accent-text: #ffffff;
+  --error: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171c;
+    --surface: #1d2128;
+    --text: #e8ebef;
+    --muted: #9aa5b3;
+    --border: #333a45;
+    --accent: #6d8ff0;
+    --accent-text: #0e1116;
+    --error: #f97066;
+  }
 }
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .container {
   max-width: 48rem;
   margin: 0 auto;
   padding: 2rem 1rem;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+.error {
+  color: var(--error);
+  margin: 0.25rem 0 0;
+}
+
+.hero {
+  text-align: center;
+  padding: 4rem 0;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.panel.narrow {
+  max-width: 24rem;
+  margin: 3rem auto;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.button {
+  padding: 0.6rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button.primary {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.panel form .button {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.room-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.room-header p {
+  margin: 0;
+}
+
+.share {
+  flex: 1 1 18rem;
+  max-width: 26rem;
+}
+
+.share-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.participants {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.participants li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.participants li:last-child {
+  border-bottom: none;
+}
+
+.deck {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.card {
+  width: 3.5rem;
+  height: 5rem;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.card:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }

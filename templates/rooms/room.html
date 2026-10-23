@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{% if room.story_title %}{{ room.story_title }} · {% endif %}Story Point Poker{% endblock %}
+
+{% block content %}
+  <header class="room-header">
+    <div>
+      <p class="muted small">Round {{ room.round }}</p>
+      <h1>{{ room.story_title|default:"Untitled story" }}</h1>
+    </div>
+    <div class="share">
+      <label for="room-url" class="small muted">Invite your team</label>
+      <div class="share-row">
+        <input id="room-url" type="text" value="{{ room_url }}" readonly onfocus="this.select()">
+        <button type="button" class="button" onclick="navigator.clipboard.writeText(document.getElementById('room-url').value); this.textContent = 'Copied!'">Copy link</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2>Players</h2>
+    <ul class="participants">
+      {% for participant in participants %}
+        <li>
+          {{ participant.display_name }}
+          {% if participant == me %}<span class="muted small">(you)</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>Your card</h2>
+    {# Voting goes live in milestone 3. #}
+    <div class="deck">
+      {% for card in room.deck %}
+        <button type="button" class="card" disabled>{{ card }}</button>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}
