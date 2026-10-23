@@ -1,0 +1,33 @@
+# Render Blueprint: tells Render how to build and run the app.
+# Reference: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: story-point-poker
+    runtime: python  # Python version comes from .python-version
+    region: virginia
+    plan: free  # switch to "starter" (or in the dashboard) to stay always on
+    branch: main
+    autoDeploy: true  # deploy on every push to main
+    healthCheckPath: /healthz
+
+    # Render installs uv because uv.lock exists, then:
+    # install the app's packages (not the test tools) and gather static files.
+    buildCommand: uv sync --frozen --no-dev && uv run --no-sync python manage.py collectstatic --noinput
+
+    # The database is a fresh file on each start (the free plan has no lasting
+    # disk), so create its tables first, then start one Uvicorn process.
+    # Exactly one process: online status and the channel layer live in memory.
+    startCommand: >-
+      .venv/bin/python manage.py migrate --noinput &&
+      .venv/bin/uvicorn config.asgi:application
+      --host 0.0.0.0 --port $PORT
+      --proxy-headers --forwarded-allow-ips "*"
+      --ws-max-size 65536
+
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true  # Render creates a random secret once
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: UV_PYTHON_DOWNLOADS
+        value: never  # use Render's Python 3.12 rather than downloading one

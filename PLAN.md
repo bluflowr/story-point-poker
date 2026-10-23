@@ -7,7 +7,7 @@
 | Identity | Anonymous: enter a display name, share a room link. No accounts. |
 | Persistence | Rooms are temporary and expire after inactivity |
 | Stack | Django 5.2 + Django Channels (WebSockets) + HTMX, served by Uvicorn. SQLite. One server process with the in-memory channel layer (Redis only if we ever need more than one process). Python 3.12 managed by uv. |
-| Hosting | Render web service with HTTPS and deploy-on-push from GitHub. A single instance; we'd add Redis only if we ever needed more than one. |
+| Hosting | Render web service, **Virginia** region, **Free** plan, defined in `render.yaml`. HTTPS, and deploy-on-push from GitHub. A single instance; we'd add Redis only if we ever needed more than one. |
 
 ## Requirements
 
@@ -78,7 +78,7 @@ How a vote travels: you click a card → HTMX sends `{"action":"vote","value":"5
 | 3 ✅ | Voting loop | Vote, reveal, reset and the results summary; votes hidden server-side until reveal |
 | 3b ✅ | Decks | Preset and custom decks, deck picker at room creation, switching decks between rounds, stats for non-numeric decks |
 | 4 ✅ | Hardening | Reconnect handling, room expiry command, mobile layout, consumer tests (Channels `WebsocketCommunicator`) |
-| 5 | Deploy | Production settings, `render.yaml` blueprint, GitHub repo connected to Render, and a smoke test with people on different continents |
+| 5 🟡 | Deploy | Production settings ✅, `render.yaml` ✅, production dress rehearsal ✅. Remaining: push to GitHub and create the Render service (README → Deploying to Render) |
 | 6+ | Extras | Pick from the "later" list |
 
 ## Render notes

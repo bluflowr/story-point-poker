@@ -121,6 +121,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
             return False, None
 
         action = message.get("action")
+        if action == "ping":
+            # Keep-alive from connection.js; the message itself is the point.
+            return False, None
         if action == "story":
             changed = actions.set_story(room, str(message.get("title", "")))
         elif action == "deck":

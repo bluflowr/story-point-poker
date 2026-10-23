@@ -91,3 +91,38 @@ Built-in limits (in `rooms/views.py` and `rooms/consumers.py`):
 - 10 new rooms per IP address per 10 minutes, and 200 per hour overall
 - 50 players per room
 - 20 actions per connection per 10 seconds; larger-than-2KB messages are ignored
+
+## Deploying to Render
+
+The app is set up for [Render](https://render.com). Everything Render needs is in `render.yaml`: the build and start commands, the health check, region (Virginia) and plan (Free).
+
+### First deploy
+
+1. **Put the code on GitHub.** On github.com, create a new **private** repository (e.g. `story-point-poker`) *without* a README, .gitignore or licence. Then, in the project folder:
+
+   ```bash
+   git remote add origin https://github.com/<your-username>/story-point-poker.git
+   git push -u origin main
+   ```
+
+   If git asks for a password, GitHub wants a [personal access token](https://github.com/settings/tokens) (classic, with the `repo` scope) instead of your account password.
+
+2. **Create the service on Render.** Sign in at https://dashboard.render.com, choose **New → Blueprint**, connect your GitHub account, pick the repository, and click **Apply**. Render reads `render.yaml`, generates a secret key, and starts the first build (a few minutes).
+
+3. **Open the app** at the `https://….onrender.com` address shown on the service page and play a round.
+
+### After that
+
+Every `git push` to `main` deploys automatically. Watch progress and logs on the service's page in the Render dashboard.
+
+Commands are run on Render, not on your machine. `render.yaml` is the place to change them:
+- **Build:** `uv sync --frozen --no-dev && uv run --no-sync python manage.py collectstatic --noinput`
+- **Start:** `.venv/bin/python manage.py migrate --noinput && .venv/bin/uvicorn config.asgi:application --host 0.0.0.0 --port $PORT ...`
+
+### Good to know
+
+- **Free plan:** the service sleeps after 15 minutes with no traffic, and the first visit afterwards takes about a minute. While a room page is open, it sends a small keep-alive message every 4 minutes (`static/js/connection.js`), so it won't fall asleep mid-session.
+- **Rooms don't survive restarts or deploys.** The free plan has no lasting disk, so the SQLite database starts empty each time. Avoid deploying while your team is estimating.
+- **To keep rooms across restarts:** upgrade to a paid plan, attach a disk (e.g. mounted at `/var/data`), and set `SQLITE_PATH=/var/data/db.sqlite3` in the Environment tab.
+- **Keep it to one instance.** Online status and live updates live in the server's memory. More than one instance would need Redis (`channels_redis`).
+- **Admin on Render:** only practical on a paid plan with a disk. Run `.venv/bin/python manage.py createsuperuser` from the service's **Shell** tab (Render doesn't offer a shell on the free plan). Without a disk, the login is lost on restart like everything else.

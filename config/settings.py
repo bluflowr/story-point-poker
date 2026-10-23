@@ -144,6 +144,12 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    # Render's health checks should get a plain 200, not a redirect to HTTPS.
+    SECURE_REDIRECT_EXEMPT = [r"^healthz$"]
+
+# HSTS subdomains/preload only make sense on a domain you own; the app lives
+# under onrender.com, which belongs to Render.
+SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
 
 
 # Rooms

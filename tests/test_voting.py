@@ -219,3 +219,11 @@ async def test_oversized_message_is_ignored():
     await ada.send(action="story", title="x" * 5000)
     assert await ada.ws.receive_nothing()
     await leave(ada)
+
+
+async def test_keepalive_ping_changes_nothing():
+    room = await new_room()
+    (ada,) = await seat(room, "Ada")
+    await ada.send(action="ping")
+    assert await ada.ws.receive_nothing()
+    await leave(ada)
