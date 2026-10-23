@@ -78,7 +78,7 @@ How a vote travels: you click a card → HTMX sends `{"action":"vote","value":"5
 | 3 ✅ | Voting loop | Vote, reveal, reset and the results summary; votes hidden server-side until reveal |
 | 3b ✅ | Decks | Preset and custom decks, deck picker at room creation, switching decks between rounds, stats for non-numeric decks |
 | 4 ✅ | Hardening | Reconnect handling, room expiry command, mobile layout, consumer tests (Channels `WebsocketCommunicator`) |
-| 5 🟡 | Deploy | Production settings ✅, `render.yaml` ✅, production dress rehearsal ✅. Remaining: push to GitHub and create the Render service (README → Deploying to Render) |
+| 5 ✅ | Deploy | Live at https://story-point-poker-13a5.onrender.com (Render, Virginia, Free). Verified health check, HTTPS, security headers, static files, and a full two-player round over wss:// |
 | 6+ | Extras | Pick from the "later" list |
 
 ## Render notes

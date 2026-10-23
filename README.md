@@ -94,7 +94,7 @@ Built-in limits (in `rooms/views.py` and `rooms/consumers.py`):
 
 ## Deploying to Render
 
-The app is set up for [Render](https://render.com). Everything Render needs is in `render.yaml`: the build and start commands, the health check, region (Virginia) and plan (Free).
+The app runs on [Render](https://render.com) at https://story-point-poker-13a5.onrender.com. Everything Render needs is in `render.yaml`: the build and start commands, the health check, region (Virginia) and plan (Free).
 
 ### First deploy
 
