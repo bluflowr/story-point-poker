@@ -38,6 +38,8 @@ body {
   max-width: 48rem;
   margin: 0 auto;
   padding: 2rem 1rem;
+  /* Lets the layout respond to the page's width (see the end of this file). */
+  container: page / inline-size;
 }
 
 h1 {
@@ -347,4 +349,67 @@ input[type="text"] {
 
 #deck-error:empty {
   display: none;
+}
+
+/* Connection problems */
+
+.notice {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--error);
+  border-radius: 0.5rem;
+  color: var(--error);
+}
+
+.notice a {
+  color: inherit;
+  font-weight: 600;
+}
+
+#notice:empty {
+  display: none;
+}
+
+.reconnecting-banner {
+  display: none;
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+body.reconnecting .reconnecting-banner {
+  display: block;
+}
+
+/* Dim the room: clicks still queue and are sent once reconnected. */
+body.reconnecting [hx-ext="ws"] {
+  opacity: 0.6;
+}
+
+/* Once the server has said this page can't continue, grey out the stale room. */
+[hx-ext="ws"]:has(#notice:not(:empty)) > :not(#notice) {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Phones: put your cards right under the story, above the player list,
+   so voting doesn't need scrolling. */
+@container page (max-width: 40rem) {
+  [hx-ext="ws"] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  [hx-ext="ws"] > #deck {
+    order: 1;
+  }
+
+  [hx-ext="ws"] > .board {
+    order: 2;
+  }
 }

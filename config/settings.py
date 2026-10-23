@@ -144,3 +144,9 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
     SECURE_CONTENT_TYPE_NOSNIFF = True
+
+
+# Rooms
+
+# Rooms nobody has touched for this long are deleted (see rooms/expiry.py).
+ROOM_EXPIRY_HOURS = int(os.environ.get("ROOM_EXPIRY_HOURS", 24))

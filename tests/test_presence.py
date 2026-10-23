@@ -54,22 +54,35 @@ async def test_member_connects_and_gets_player_list():
     await ada.disconnect()
 
 
-async def test_visitor_who_has_not_joined_is_rejected():
+async def assert_turned_away(ws, close_code, text):
+    """The server accepts, sends a notice, then closes so the browser stops retrying."""
+    connected, _ = await ws.connect()
+    assert connected
+    notice = await ws.receive_from()
+    assert 'id="notice"' in notice
+    assert text in notice
+    assert await ws.receive_output() == {"type": "websocket.close", "code": close_code}
+
+
+async def test_visitor_who_has_not_joined_is_told_to_join():
     room = await new_room()
-    connected, _ = await socket(room.code).connect()
-    assert not connected
+    await assert_turned_away(socket(room.code), 4403, "Join again")
 
 
-async def test_member_of_another_room_is_rejected():
+async def test_member_of_another_room_is_told_to_join():
     room, other_room = await new_room(), await new_room()
     session = await join_as(room, "Ada")
-    connected, _ = await socket(other_room.code, session).connect()
-    assert not connected
+    await assert_turned_away(socket(other_room.code, session), 4403, "Join again")
 
 
-async def test_unknown_room_is_rejected():
-    connected, _ = await socket("doesnotexist").connect()
-    assert not connected
+async def test_unknown_room_says_it_has_expired():
+    await assert_turned_away(socket("doesnotexist"), 4404, "expired")
+
+
+async def test_turned_away_visitor_is_not_counted_online():
+    room = await new_room()
+    await assert_turned_away(socket(room.code), 4403, "Join again")
+    assert presence.online_ids(room.code) == set()
 
 
 async def test_everyone_sees_players_come_online_and_go_offline():

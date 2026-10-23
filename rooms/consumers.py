@@ -21,6 +21,7 @@ from . import actions, presence
 from .forms import DeckForm
 from .fragments import board_context
 from .identity import get_participant
+from .limits import RateLimiter
 from .models import Room
 
 
@@ -28,17 +29,35 @@ def group_name(room_code):
     return f"room_{room_code}"
 
 
+# Custom close codes (4000-4999 are free for apps). The htmx ws extension only
+# reconnects after unexpected drops (1006, 1012, 1013), so these stop it from
+# retrying a connection that can never succeed.
+CLOSE_ROOM_GONE = 4404
+CLOSE_NOT_SEATED = 4403
+
+# Anything bigger than this isn't a real form submission.
+MAX_MESSAGE_LENGTH = 2000
+
+
 class RoomConsumer(AsyncWebsocketConsumer):
     participant_id = None
+    # Per connection: plenty for clicking around, too few for a flood.
+    message_limit = 20
+    message_window = 10  # seconds
 
     async def connect(self):
         self.room_code = self.scope["url_route"]["kwargs"]["code"]
         self.group = group_name(self.room_code)
+        self.limiter = RateLimiter(self.message_limit, self.message_window)
 
-        self.participant_id = await self.find_participant()
-        if self.participant_id is None:
-            # Not a member of this room (or it doesn't exist): refuse.
-            await self.close()
+        self.participant_id, problem = await self.find_participant()
+        if problem:
+            # Accept just long enough to tell the page what's wrong, then close
+            # with a code that stops the browser from retrying.
+            await self.accept()
+            notice = render_to_string("rooms/_notice.html", {"problem": problem, "room_code": self.room_code})
+            await self.send(text_data=notice)
+            await self.close(code=CLOSE_ROOM_GONE if problem == "gone" else CLOSE_NOT_SEATED)
             return
 
         presence.connect(self.room_code, self.participant_id)
@@ -54,8 +73,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.broadcast_change()
 
     async def receive(self, text_data=None, bytes_data=None):
+        if not text_data or len(text_data) > MAX_MESSAGE_LENGTH or not self.limiter.allow():
+            return
         try:
-            message = json.loads(text_data or "")
+            message = json.loads(text_data)
         except json.JSONDecodeError:
             return
         if not isinstance(message, dict):
@@ -82,14 +103,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def find_participant(self):
+        """Returns (participant id, None), or (None, "gone" / "not_seated")."""
         room = Room.objects.filter(code=self.room_code).first()
         if room is None:
-            return None
+            return None, "gone"
         participant = get_participant(self.scope["session"], room)
         if participant is None:
-            return None
+            return None, "not_seated"
         room.touch()
-        return participant.id
+        return participant.id, None
 
     @database_sync_to_async
     def apply_action(self, message):

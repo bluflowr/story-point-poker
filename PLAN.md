@@ -77,7 +77,7 @@ How a vote travels: you click a card → HTMX sends `{"action":"vote","value":"5
 | 2 ✅ | Realtime presence | `RoomConsumer`, live participant list with online/offline status |
 | 3 ✅ | Voting loop | Vote, reveal, reset and the results summary; votes hidden server-side until reveal |
 | 3b ✅ | Decks | Preset and custom decks, deck picker at room creation, switching decks between rounds, stats for non-numeric decks |
-| 4 | Hardening | Reconnect handling, room expiry command, mobile layout, consumer tests (Channels `WebsocketCommunicator`) |
+| 4 ✅ | Hardening | Reconnect handling, room expiry command, mobile layout, consumer tests (Channels `WebsocketCommunicator`) |
 | 5 | Deploy | Production settings, `render.yaml` blueprint, GitHub repo connected to Render, and a smoke test with people on different continents |
 | 6+ | Extras | Pick from the "later" list |
 

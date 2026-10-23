@@ -197,3 +197,25 @@ async def test_bad_custom_deck_error_goes_only_to_sender():
     assert "at most 4 characters" in error
     assert await grace.ws.receive_nothing()
     await leave(ada, grace)
+
+
+async def test_message_flood_is_dropped(monkeypatch):
+    from rooms.consumers import RoomConsumer
+
+    monkeypatch.setattr(RoomConsumer, "message_limit", 2)
+    room = await new_room()
+    (ada,) = await seat(room, "Ada")
+    for title in ("one", "two"):
+        await ada.send(action="story", title=title)
+        await ada.latest()
+    await ada.send(action="story", title="three")
+    assert await ada.ws.receive_nothing()
+    await leave(ada)
+
+
+async def test_oversized_message_is_ignored():
+    room = await new_room()
+    (ada,) = await seat(room, "Ada")
+    await ada.send(action="story", title="x" * 5000)
+    assert await ada.ws.receive_nothing()
+    await leave(ada)

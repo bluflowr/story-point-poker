@@ -2,10 +2,17 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from .expiry import delete_expired_rooms_occasionally
 from .forms import DeckForm, JoinForm
 from .fragments import board_context
 from .identity import get_participant, last_display_name, remember_participant
+from .limits import RateLimiter, client_ip
 from .models import Room
+
+# Generous for a team, but stops a script from filling the database.
+ROOM_CREATION_PER_IP = RateLimiter(limit=10, window=10 * 60)
+ROOM_CREATION_OVERALL = RateLimiter(limit=200, window=60 * 60)
+MAX_PLAYERS_PER_ROOM = 50
 
 
 def home(request):
@@ -17,6 +24,12 @@ def create_room(request):
     deck_form = DeckForm(request.POST)
     if not deck_form.is_valid():
         return render(request, "rooms/home.html", {"deck_form": deck_form}, status=400)
+
+    if not (ROOM_CREATION_PER_IP.allow(client_ip(request)) and ROOM_CREATION_OVERALL.allow()):
+        context = {"deck_form": deck_form, "error": "Too many new rooms just now. Please wait a few minutes."}
+        return render(request, "rooms/home.html", context, status=429)
+
+    delete_expired_rooms_occasionally()
     room = Room.objects.create(deck=deck_form.cleaned_data["cards"])
     return redirect(room)
 
@@ -45,7 +58,9 @@ def join(request, code):
         return redirect(room)
 
     form = JoinForm(request.POST or None, initial={"display_name": last_display_name(request.session)})
-    if request.method == "POST" and form.is_valid():
+    if request.method == "POST" and room.participants.count() >= MAX_PLAYERS_PER_ROOM:
+        form.add_error(None, f"This room is full ({MAX_PLAYERS_PER_ROOM} players).")
+    elif request.method == "POST" and form.is_valid():
         participant = room.participants.create(display_name=form.cleaned_data["display_name"])
         remember_participant(request.session, participant)
         room.touch()

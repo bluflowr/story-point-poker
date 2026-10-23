@@ -1,11 +1,17 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{% if room.story_title %}{{ room.story_title }} · {% endif %}Story Point Poker{% endblock %}
 
+{% block scripts %}<script src="{% static 'js/connection.js' %}" defer></script>{% endblock %}
+
 {% block content %}
+  <div class="reconnecting-banner" role="status">Connection lost. Reconnecting…</div>
   {# Opens the live connection. Forms marked ws-send inside it send over the socket, #}
   {# and fragments from the server replace the elements with matching ids. #}
   <div hx-ext="ws" ws-connect="/ws/rooms/{{ room.code }}/">
+    {# Replaced by a notice if the server can't let this page in (rooms/_notice.html). #}
+    <div id="notice"></div>
     <header class="room-header">
       {% include "rooms/_story.html" %}
       <div class="share">

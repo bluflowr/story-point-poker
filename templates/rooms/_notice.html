@@ -1,0 +1,7 @@
+<div id="notice" class="notice" role="alert">
+  {% if problem == "gone" %}
+    This room has expired or no longer exists. <a href="{% url 'rooms:home' %}">Create a new room</a>
+  {% else %}
+    You're no longer seated in this room. <a href="{% url 'rooms:join' room_code %}">Join again</a>
+  {% endif %}
+</div>

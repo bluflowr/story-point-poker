@@ -8,6 +8,7 @@
 
   <form method="post" action="{% url 'rooms:create' %}" class="panel narrow">
     {% csrf_token %}
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
     {% include "rooms/_deck_fields.html" %}
     <button type="submit" class="button primary">Create a room</button>
   </form>

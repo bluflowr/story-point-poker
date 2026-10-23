@@ -29,3 +29,16 @@ uv run pytest
 uv run ruff check .
 uv run ruff format .
 ```
+
+## Housekeeping
+
+Rooms nobody has used for `ROOM_EXPIRY_HOURS` (default 24) are deleted automatically, at most once an hour, when someone creates a new room. Rooms with people connected are never deleted. To clean up by hand:
+
+```bash
+uv run python manage.py expire_rooms
+```
+
+Built-in limits (in `rooms/views.py` and `rooms/consumers.py`):
+- 10 new rooms per IP address per 10 minutes, and 200 per hour overall
+- 50 players per room
+- 20 actions per connection per 10 seconds; larger-than-2KB messages are ignored

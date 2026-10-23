@@ -41,3 +41,8 @@ def reset():
     """Forget everyone. Used by tests."""
     with _lock:
         _connections.clear()
+
+
+def active_room_codes():
+    with _lock:
+        return set(_connections)

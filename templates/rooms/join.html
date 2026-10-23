@@ -7,6 +7,7 @@
     <h1>Join the room</h1>
     <form method="post">
       {% csrf_token %}
+      {% for error in form.non_field_errors %}<p class="error" role="alert">{{ error }}</p>{% endfor %}
       <label for="{{ form.display_name.id_for_label }}">{{ form.display_name.label }}</label>
       {{ form.display_name }}
       {% for error in form.display_name.errors %}<p class="error">{{ error }}</p>{% endfor %}
