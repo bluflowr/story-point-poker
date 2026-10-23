@@ -17,17 +17,10 @@
     </div>
   </header>
 
-  <section class="panel">
-    <h2>Players</h2>
-    <ul class="participants">
-      {% for participant in participants %}
-        <li>
-          {{ participant.display_name }}
-          {% if participant == me %}<span class="muted small">(you)</span>{% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-  </section>
+  {# Opens the live connection; fragments sent by the server replace elements with matching ids. #}
+  <div hx-ext="ws" ws-connect="/ws/rooms/{{ room.code }}/">
+    {% include "rooms/_participants.html" %}
+  </div>
 
   <section class="panel">
     <h2>Your card</h2>

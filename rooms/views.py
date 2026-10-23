@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from .forms import JoinForm
+from .fragments import participants_context
 from .identity import get_participant, last_display_name, remember_participant
 from .models import Room
 
@@ -28,9 +29,9 @@ def room(request, code):
         "rooms/room.html",
         {
             "room": room,
-            "me": participant,
-            "participants": room.participants.all(),
             "room_url": request.build_absolute_uri(room.get_absolute_url()),
+            # Show the visitor as online straight away; their socket connects a moment later.
+            **participants_context(room, participant.id, also_online=[participant.id]),
         },
     )
 

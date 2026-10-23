@@ -11,6 +11,7 @@
   --accent: #2f5bd3;
   --accent-text: #ffffff;
   --error: #b42318;
+  --online: #12a150;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +24,7 @@
     --accent: #6d8ff0;
     --accent-text: #0e1116;
     --error: #f97066;
+    --online: #3ccf7c;
   }
 }
 
@@ -178,4 +180,26 @@ input[type="text"] {
 .card:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.participants li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.participants li.offline {
+  color: var(--muted);
+}
+
+.status-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--border);
+  flex: none;
+}
+
+.online .status-dot {
+  background: var(--online);
 }

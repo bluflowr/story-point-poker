@@ -66,7 +66,7 @@ How a vote travels: you click a card → HTMX sends `{"action":"vote","value":"5
 
 ## Data model (draft)
 - **Room**: `code` (slug, unique), `deck` (list of card strings, JSONField; presets live in code), `story_title`, `revealed` (bool), `round` (int), `created_at`, `last_activity_at`
-- **Participant**: `room` FK, `display_name`, `joined_at`, plus `is_connected` (added in milestone 2). There are no accounts: the browser's Django session maps room code → participant id (`rooms/identity.py`).
+- **Participant**: `room` FK, `display_name`, `joined_at`. Online status isn't stored in the database: it lives in memory in `rooms/presence.py`, which fits a single process. There are no accounts: the browser's Django session maps room code → participant id (`rooms/identity.py`).
 - **Vote**: `participant` FK, `round`, `value` (str); unique on (participant, round)
 
 ## Milestones
@@ -74,7 +74,7 @@ How a vote travels: you click a card → HTMX sends `{"action":"vote","value":"5
 |---|---|---|
 | 0 ✅ | Project setup | Django project, Channels + Uvicorn, HTMX vendored in `static/vendor`, env-based settings, pytest + pytest-django, ruff |
 | 1 ✅ | Rooms & joining | Create/join flow and display name in session. The room page renders statically, with no realtime yet. |
-| 2 | Realtime presence | `RoomConsumer`, live participant list with online/offline status |
+| 2 ✅ | Realtime presence | `RoomConsumer`, live participant list with online/offline status |
 | 3 | Voting loop | Vote, reveal, reset and the results summary; votes hidden server-side until reveal |
 | 3b | Decks | Preset and custom decks, deck picker at room creation, switching decks between rounds, stats for non-numeric decks |
 | 4 | Hardening | Reconnect handling, room expiry command, mobile layout, consumer tests (Channels `WebsocketCommunicator`) |

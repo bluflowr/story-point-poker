@@ -1,0 +1,14 @@
+{# Pushed over the WebSocket; htmx replaces the element with this id. #}
+<section id="participants" class="panel">
+  <h2>Players <span class="muted small">{{ online_count }} online</span></h2>
+  <ul class="participants">
+    {% for participant in participants %}
+      <li class="{% if participant.id in online_ids %}online{% else %}offline{% endif %}">
+        <span class="status-dot" aria-hidden="true"></span>
+        {{ participant.display_name }}
+        {% if participant.id == me_id %}<span class="muted small">(you)</span>{% endif %}
+        {% if participant.id not in online_ids %}<span class="muted small">offline</span>{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</section>

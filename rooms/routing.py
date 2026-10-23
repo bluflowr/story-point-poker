@@ -1,4 +1,9 @@
 """WebSocket URL routes, the Channels equivalent of urls.py."""
 
-# The room consumer (ws/rooms/<code>/) gets added here in milestone 2.
-websocket_urlpatterns = []
+from django.urls import path
+
+from . import consumers
+
+websocket_urlpatterns = [
+    path("ws/rooms/<slug:code>/", consumers.RoomConsumer.as_asgi()),
+]
