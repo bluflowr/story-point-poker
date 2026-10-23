@@ -47,3 +47,13 @@ def set_story(room, title):
     room.story_title = title
     room.save(update_fields=["story_title"])
     return True
+
+
+def set_deck(room, cards):
+    """Switch decks. Starts a fresh round, since old votes may not exist in the new deck."""
+    if list(cards) == room.deck:
+        return False
+    with transaction.atomic():
+        Room.objects.filter(id=room.id).update(deck=list(cards), round=F("round") + 1, revealed=False)
+        room.participants.update(vote="")
+    return True

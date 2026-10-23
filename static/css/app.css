@@ -65,7 +65,7 @@ h2 {
 
 .hero {
   text-align: center;
-  padding: 4rem 0;
+  padding: 3rem 0 0;
 }
 
 .panel {
@@ -165,8 +165,9 @@ input[type="text"] {
 }
 
 .card {
-  width: 3.5rem;
+  min-width: 3.5rem;
   height: 5rem;
+  padding: 0 0.5rem;
   font: inherit;
   font-size: 1.25rem;
   font-weight: 700;
@@ -290,4 +291,60 @@ input[type="text"] {
   list-style: none;
   margin: 0 0 1rem;
   padding: 0;
+}
+
+/* Deck picker */
+
+.deck-picker {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.deck-picker legend {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.deck-option {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  cursor: pointer;
+}
+
+.custom-cards {
+  margin-top: 0.5rem;
+}
+
+.custom-cards p {
+  margin: 0.25rem 0 0;
+}
+
+/* No JavaScript needed: hide the custom box unless "Custom" is picked. */
+.deck-picker:not(:has(input[value="custom"]:checked)) .custom-cards {
+  display: none;
+}
+
+.deck-switcher {
+  margin-bottom: 1rem;
+}
+
+.deck-switcher summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.deck-switcher form {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+#deck-error:empty {
+  display: none;
 }

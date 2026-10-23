@@ -47,3 +47,10 @@ def test_non_numeric_deck_reports_most_common_in_deck_order():
     summary = summarize(["M", "L", "M", "L", "S"], TSHIRT)
     assert summary["average"] is None
     assert summary["most_common"] == ["M", "L"]
+
+
+def test_half_card_counts_as_a_number():
+    summary = summarize(["½", "1", "2"], ["0", "½", "1", "2", "?"])
+    assert summary["average"] == "1.2"
+    assert summary["low"] == "½"
+    assert summary["high"] == "2"

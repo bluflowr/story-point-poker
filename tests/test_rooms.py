@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 
 
 def create_room(client):
-    response = client.post(reverse("rooms:create"))
+    response = client.post(reverse("rooms:create"), {"deck": "fibonacci"})
     return Room.objects.get(), response
 
 

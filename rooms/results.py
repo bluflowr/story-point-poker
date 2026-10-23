@@ -8,7 +8,13 @@ from decimal import ROUND_HALF_UP, Decimal
 NON_ESTIMATES = {"?", "☕"}
 
 
+# Fractions people commonly put on cards.
+FRACTIONS = {"½": 0.5, "¼": 0.25, "¾": 0.75}
+
+
 def _as_number(card):
+    if card in FRACTIONS:
+        return FRACTIONS[card]
     try:
         return float(card)
     except ValueError:
@@ -44,8 +50,8 @@ def summarize(votes, deck):
     numbers = [_as_number(vote) for vote in counted]
     if all(number is not None for number in numbers):
         summary["average"] = _format_number(sum(numbers) / len(numbers))
-        summary["low"] = min(counted, key=float)
-        summary["high"] = max(counted, key=float)
+        summary["low"] = min(counted, key=_as_number)
+        summary["high"] = max(counted, key=_as_number)
     else:
         # Non-numeric decks (e.g. T-shirt sizes): report the most played card(s).
         counted_tally = Counter(counted)

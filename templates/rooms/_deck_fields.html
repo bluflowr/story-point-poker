@@ -1,0 +1,14 @@
+{# The deck picker, shared by the home page and the room's "Change deck" form. #}
+<fieldset class="deck-picker">
+  <legend>Deck</legend>
+  {% for radio in deck_form.deck %}
+    <label class="deck-option">{{ radio.tag }} {{ radio.choice_label }}</label>
+  {% endfor %}
+  {# Only shown while "Custom" is selected (see .deck-picker in app.css). #}
+  <div class="custom-cards">
+    <label for="{{ deck_form.custom.id_for_label }}">{{ deck_form.custom.label }}</label>
+    {{ deck_form.custom }}
+    <p class="muted small">{{ deck_form.custom.help_text }}</p>
+    {% for error in deck_form.custom.errors %}<p class="error">{{ error }}</p>{% endfor %}
+  </div>
+</fieldset>

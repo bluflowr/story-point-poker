@@ -4,9 +4,11 @@
   <header class="hero">
     <h1>Story Point Poker</h1>
     <p class="muted">Estimate stories together. Create a room, share the link, and vote.</p>
-    <form method="post" action="{% url 'rooms:create' %}">
-      {% csrf_token %}
-      <button type="submit" class="button primary">Create a room</button>
-    </form>
   </header>
+
+  <form method="post" action="{% url 'rooms:create' %}" class="panel narrow">
+    {% csrf_token %}
+    {% include "rooms/_deck_fields.html" %}
+    <button type="submit" class="button primary">Create a room</button>
+  </form>
 {% endblock %}

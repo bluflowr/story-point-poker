@@ -27,6 +27,17 @@
       </div>
     </form>
 
+    <details class="deck-switcher">
+      <summary class="small">Change deck</summary>
+      <form ws-send>
+        <input type="hidden" name="action" value="deck">
+        {% include "rooms/_deck_fields.html" %}
+        <p id="deck-error" class="error" role="alert"></p>
+        <button type="submit" class="button">Switch deck</button>
+        <span class="muted small">This starts a new round and clears everyone's votes.</span>
+      </form>
+    </details>
+
     <div class="board">
       {% include "rooms/_participants.html" %}
       {% include "rooms/_results.html" %}

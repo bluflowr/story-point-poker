@@ -169,3 +169,31 @@ async def test_bad_messages_are_ignored(raw):
     await ada.ws.send_to(text_data=raw)
     assert await ada.ws.receive_nothing()
     await leave(ada)
+
+
+async def test_switching_deck_updates_everyones_cards():
+    room = await new_room()
+    ada, grace = await seat(room, "Ada", "Grace")
+    await ada.send(action="vote", round="1", value="5")
+    await ada.latest(), await grace.latest()
+
+    await grace.send(action="deck", deck="tshirt", custom="")
+    view = await ada.latest()
+    await grace.latest()
+    assert 'name="value" value="XL"' in view
+    assert 'name="value" value="13"' not in view
+    assert "Round 2" in view
+    assert "0 of 2 voted" in view
+    await leave(ada, grace)
+
+
+async def test_bad_custom_deck_error_goes_only_to_sender():
+    room = await new_room()
+    ada, grace = await seat(room, "Ada", "Grace")
+
+    await ada.send(action="deck", deck="custom", custom="WAYTOOLONG, 1")
+    error = await ada.latest()
+    assert 'id="deck-error"' in error
+    assert "at most 4 characters" in error
+    assert await grace.ws.receive_nothing()
+    await leave(ada, grace)

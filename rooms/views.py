@@ -2,19 +2,22 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import JoinForm
+from .forms import DeckForm, JoinForm
 from .fragments import board_context
 from .identity import get_participant, last_display_name, remember_participant
 from .models import Room
 
 
 def home(request):
-    return render(request, "rooms/home.html")
+    return render(request, "rooms/home.html", {"deck_form": DeckForm()})
 
 
 @require_POST
 def create_room(request):
-    room = Room.objects.create()
+    deck_form = DeckForm(request.POST)
+    if not deck_form.is_valid():
+        return render(request, "rooms/home.html", {"deck_form": deck_form}, status=400)
+    room = Room.objects.create(deck=deck_form.cleaned_data["cards"])
     return redirect(room)
 
 
@@ -29,6 +32,7 @@ def room(request, code):
         "rooms/room.html",
         {
             "room_url": request.build_absolute_uri(room.get_absolute_url()),
+            "deck_form": DeckForm.for_room(room),
             # Show the visitor as online straight away; their socket connects a moment later.
             **board_context(room, participant.id, also_online=[participant.id]),
         },
